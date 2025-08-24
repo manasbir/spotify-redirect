@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/d1';
+// i dont like wildcare import, but seems necessary
 import * as schema from './schema';
 
 export function getDb(d1: D1Database) {
