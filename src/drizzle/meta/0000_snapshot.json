@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cba68172-33c8-4243-bf06-348d66e6791a",
+  "id": "d40014cc-26ad-44fb-95e9-4a8890bd828c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "connections": {
@@ -9,37 +9,37 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "session_id": {
           "name": "session_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "spotify_refresh_token": {
           "name": "spotify_refresh_token",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "spotify_access_token": {
           "name": "spotify_access_token",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "spotify_expires_at": {
           "name": "spotify_expires_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
@@ -47,16 +47,21 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {

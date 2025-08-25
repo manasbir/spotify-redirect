@@ -1,6 +1,6 @@
 ## todo
 - add daisy ui
-- add google analytics
+- add google analytics (low prio)
 - test db
-- add session manager
-- connect to spotify
+- add session manager 
+- connect to spotify (test first)
