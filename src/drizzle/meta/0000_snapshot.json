@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d40014cc-26ad-44fb-95e9-4a8890bd828c",
+  "id": "fe5ef780-4906-44a5-b294-c4b4247ee734",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "connections": {
@@ -9,10 +9,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": true
         },
         "session_id": {
           "name": "session_id",

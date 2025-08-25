@@ -21,15 +21,14 @@ export async function validateState(state: string): Promise<boolean> {
     return false;
   }
   const connection = await getConnection(sessionId);
-  return JSON.parse(connection?.metadata ?? '{}').state === state;
+  return (connection ?? undefined)?.metadata?.state === state;
 }
 
 export async function createSession(state: string): Promise<string> {
   const sessionId = crypto.randomUUID();
   await db.insert(connections).values({
-    id: crypto.randomUUID(),
     sessionId,
-    metadata: JSON.stringify({ state }),
+    metadata: { state },
   });
 
   return sessionId;
@@ -55,7 +54,6 @@ export async function addSpotifyToken(
   await deleteSession();
   const newSessionId = crypto.randomUUID();
   await db.insert(connections).values({
-    id: crypto.randomUUID(),
     sessionId: newSessionId,
     spotifyRefreshToken: refreshToken,
     spotifyAccessToken: token,

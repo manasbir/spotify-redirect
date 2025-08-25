@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:reset": "bun src/drizzle/reset.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:prod": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:dev": "drizzle-kit migrate",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -26,6 +29,7 @@
     "@types/node": "^24.3.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "better-sqlite3": "^12.2.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",

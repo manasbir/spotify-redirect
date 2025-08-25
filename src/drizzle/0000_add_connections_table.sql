@@ -1,5 +1,5 @@
 CREATE TABLE `connections` (
-	`id` text PRIMARY KEY NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`session_id` text,
 	`spotify_refresh_token` text,
 	`spotify_access_token` text,
