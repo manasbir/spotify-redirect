@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { redirect, useSearchParams } from 'next/navigation';
 import { validateState } from '../../utils/session';
 import { useEffect, useState } from 'react';
 import { getSpotifyToken } from '@/app/utils/spotify';
@@ -28,9 +28,13 @@ export default function Callback() {
 
     if (isValid) {
       console.log('valid');
-      getSpotifyToken(code!).catch((error) => {
-        console.error(error);
-      });
+      getSpotifyToken(code!)
+        .catch((error) => {
+          console.error(error);
+        })
+        .then(() => {
+          console.log('ok');
+        });
     }
   }, [searchParams, state, isValid, code]);
 

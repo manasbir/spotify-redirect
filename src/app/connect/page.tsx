@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { generateAuthUrl } from '../utils/spotify';
 
 export default function Connect() {
@@ -8,11 +7,9 @@ export default function Connect() {
   // if not, generate a new one and start the auth flow
   // if there is, check if the session id has a connection
   // if not, start the auth flow
-  const router = useRouter();
 
   const handleConnect = async () => {
-    const url = await generateAuthUrl();
-    router.replace(url);
+    await generateAuthUrl();
   };
 
   return (

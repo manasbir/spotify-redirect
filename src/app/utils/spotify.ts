@@ -2,13 +2,18 @@
 
 import { cookies } from 'next/headers';
 import { addSpotifyToken, createSession } from './session';
+import { redirect } from 'next/navigation';
+
+const redirect_uri =
+  process.env.NODE_ENV === 'development'
+    ? 'https://upright-dog-lovely.ngrok-free.app/connect/callback'
+    : 'http://localhost:3000/connect/callback';
 
 export async function generateAuthUrl(): Promise<string> {
   const response_type = 'code';
   const client_id = process.env.SPOTIFY_CLIENT_ID;
   const state = crypto.randomUUID();
   const scope = 'user-modify-playback-state';
-  const redirect_uri = 'https://upright-dog-lovely.ngrok-free.app/connect/callback';
 
   if (!client_id) {
     throw new Error('SPOTIFY_CLIENT_ID is not set');
@@ -33,7 +38,7 @@ export async function generateAuthUrl(): Promise<string> {
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });
 
-  return `https://accounts.spotify.com/authorize?` + queryString;
+  redirect(`https://accounts.spotify.com/authorize?` + queryString);
 }
 
 export async function getSpotifyToken(code: string): Promise<{
@@ -41,7 +46,6 @@ export async function getSpotifyToken(code: string): Promise<{
 } | null> {
   const client_id = process.env.SPOTIFY_CLIENT_ID;
   const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-  const redirect_uri = 'https://upright-dog-lovely.ngrok-free.app/connect/callback';
 
   const body = new URLSearchParams({
     code,
