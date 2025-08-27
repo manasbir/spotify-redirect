@@ -1,9 +1,5 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { addSpotifyToken, createSession, getExpiresAt, getSession, setSpotifyToken } from './session';
-import { redirect } from 'next/navigation';
-
 type SpotifyTokenResponse = {
   access_token: string;
   token_type: string;
@@ -25,9 +21,12 @@ const redirect_uri =
 const client_id = process.env.SPOTIFY_CLIENT_ID!;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET!;
 
-export async function generateAuthUrl(): Promise<string> {
+export async function generateSpotifyAuthUrl(trackId?: string): Promise<{
+  authUrl: string;
+  state: string;
+}> {
   const response_type = 'code';
-  const state = crypto.randomUUID();
+  const state = crypto.randomUUID() + '--' + trackId;
   const scope = 'user-modify-playback-state';
 
   const queryString = new URLSearchParams({
@@ -38,23 +37,15 @@ export async function generateAuthUrl(): Promise<string> {
     redirect_uri,
   });
 
-  const sessionId = await createSession(state);
-
-  const cookieStore = await cookies();
-  cookieStore.set('sessionId', sessionId, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  });
-
-  redirect(`https://accounts.spotify.com/authorize?` + queryString);
+  return {
+    authUrl: `https://accounts.spotify.com/authorize?` + queryString,
+    state,
+  };
 }
 
-export async function getSpotifyToken(code: string): Promise<{
-  error: string;
-} | null> {
+export async function getSpotifyToken(
+  code: string,
+): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
   const body = new URLSearchParams({
     code,
     redirect_uri,
@@ -65,7 +56,9 @@ export async function getSpotifyToken(code: string): Promise<{
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(
+        `${client_id}:${client_secret}`,
+      ).toString('base64')}`,
     },
     body,
   });
@@ -76,30 +69,16 @@ export async function getSpotifyToken(code: string): Promise<{
     throw new Error(data.error_description);
   }
 
-  const sessionId = await addSpotifyToken(
-    data.access_token,
-    data.refresh_token,
-    new Date(Date.now() + data.expires_in * 1000),
-  );
-
-  if (!sessionId) {
-    throw new Error('Failed to add Spotify token');
-  }
-
-  return null;
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: new Date(Date.now() + data.expires_in * 1000),
+  };
 }
 
-export async function refreshSpotifyToken(): Promise<{
-  error: string;
-} | null> {
-  const session = await getSession();
-
-  if (!session) {
-    throw new Error('No session found');
-  }
-
-  const refreshToken = session.spotifyRefreshToken;
-
+export async function refreshSpotifyToken(
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
   if (!refreshToken) {
     throw new Error('No refresh token found');
   }
@@ -114,7 +93,9 @@ export async function refreshSpotifyToken(): Promise<{
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(
+        `${client_id}:${client_secret}`,
+      ).toString('base64')}`,
     },
     body,
   });
@@ -125,46 +106,37 @@ export async function refreshSpotifyToken(): Promise<{
     throw new Error(data.error_description);
   }
 
-  const sessionId = await setSpotifyToken(
-    data.access_token,
-    data.refresh_token,
-    new Date(Date.now() + data.expires_in * 1000),
-    session.sessionId ?? undefined,
-  );
-
-  if (!sessionId) {
-    throw new Error('Failed to add Spotify token');
-  }
-
-  return null;
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: new Date(Date.now() + data.expires_in * 1000),
+  };
 }
 
-export async function addToQueue(trackId: string): Promise<void> {
-  const expiresAt = await getExpiresAt();
-  if (!expiresAt) {
-    throw new Error('No session found');
-  }
-
-  if (expiresAt < Date.now()) {
-    await refreshSpotifyToken();
-  }
-
-  const session = await getSession();
-
-  const accessToken = session?.spotifyAccessToken;
-
-  if (!accessToken) {
-    throw new Error('No access token found');
-  }
-
-  const response = await fetch(`https://api.spotify.com/v1/me/player/queue?uri=spotify:track:${trackId}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+/**
+ * Add a track to the queue
+ * @param accessToken - The access token for the user, assumed to be valid and not expired
+ * @param trackId - The ID of the track to add to the queue
+ */
+export async function addToQueue(
+  accessToken: string,
+  trackId: string,
+): Promise<void> {
+  const response = await fetch(
+    `https://api.spotify.com/v1/me/player/queue?uri=spotify:track:${trackId}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
-    throw new Error('Failed to add to queue');
+    throw new Error(
+      `Failed to add to queue: ${
+        response.statusText
+      }. Response: ${await response.text()}`,
+    );
   }
 }

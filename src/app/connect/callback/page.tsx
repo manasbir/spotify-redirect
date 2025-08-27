@@ -1,48 +1,59 @@
 'use client';
 
 import { redirect, useSearchParams } from 'next/navigation';
-import { validateState } from '../../utils/session';
+import { getSpotifyToken } from '../../utils/spotify';
 import { useEffect, useState } from 'react';
-import { getSpotifyToken } from '@/app/utils/spotify';
+import { BEST_SONG_EVER_TRACK_ID } from '@/app/constants';
 
 export default function Callback() {
-  const [isValid, setIsValid] = useState(false);
   const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const code = searchParams.get('code');
   const state = searchParams.get('state');
+  const errorParam = searchParams.get('error');
 
   useEffect(() => {
-    if (searchParams.get('error')) {
-      setIsValid(false);
-      return;
+    async function getToken() {
+      if (errorParam) {
+        setError(errorParam);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!code || !state) {
+        setError('Invalid request');
+        setIsLoading(false);
+        return;
+      }
+
+      if (state !== localStorage.getItem('spotify_state')) {
+        setError('Invalid state');
+        setIsLoading(false);
+        return;
+      }
+
+      localStorage.removeItem('spotify_state');
+      const trackId = state.split('--')[1] ?? BEST_SONG_EVER_TRACK_ID;
+
+      const token = await getSpotifyToken(code);
+
+      localStorage.setItem('spotify_access_token', token.accessToken);
+      localStorage.setItem('spotify_refresh_token', token.refreshToken);
+      localStorage.setItem('spotify_expires_at', token.expiresAt.toISOString());
+
+      redirect(`/track/${trackId}`);
     }
 
-    if (!state) {
-      setIsValid(false);
-      return;
-    }
-
-    validateState(state).then((isValid) => {
-      setIsValid(isValid);
-    });
-
-    if (isValid) {
-      console.log('valid');
-      getSpotifyToken(code!)
-        .catch((error) => {
-          console.error(error);
-        })
-        .then(() => {
-          console.log('ok');
-        });
-    }
-  }, [searchParams, state, isValid, code]);
+    getToken();
+  }, [code, state, errorParam]);
 
   return (
-    <div>
-      <h1>Callback</h1>
-      <p>{code}</p>
-      <p>{state}</p>
-    </div>
+    <>
+      {isLoading && <div>Loading...</div>}
+      {error && <div>Error: {error}, send manas a manas</div>}
+      {!isLoading && !error && <div>Success</div>}
+    </>
   );
 }

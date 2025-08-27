@@ -14,15 +14,7 @@
   },
   "observability": {
     "enabled": true
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "spotify-dev",
-      "database_id": "6f230b9b-5e0e-460e-9542-eb1c60948056",
-      "migrations_dir": "src/drizzle"
-    }
-  ]
+  }
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
