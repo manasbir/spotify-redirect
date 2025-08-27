@@ -78,10 +78,6 @@ export async function getSpotifyToken(
 export async function refreshSpotifyToken(
   refreshToken: string,
 ): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
-  if (!refreshToken) {
-    throw new Error('No refresh token found');
-  }
-
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
@@ -104,6 +100,8 @@ export async function refreshSpotifyToken(
   if ('error' in data) {
     throw new Error(data.error_description);
   }
+
+  console.log(data);
 
   return {
     accessToken: data.access_token,

@@ -1,90 +1,69 @@
-'use client';
-
-import {
-  addToQueue,
-  generateSpotifyAuthUrl,
-  refreshSpotifyToken,
-  BEST_SONG_EVER_TRACK_ID,
-  getTrack,
-  Track,
-} from '@/app/spotify';
-import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { BEST_SONG_EVER_TRACK_ID, getTrack } from '@/app/spotify';
+import Head from 'next/head';
 import Image from 'next/image';
+import AddToQueue from './addToQueue';
 
-export default function TrackPage({
-  params,
-}: {
+import { Metadata } from 'next';
+
+type Props = {
   params: Promise<{ trackId: string | undefined }>;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [track, setTrack] = useState<Track | null>(null);
+};
 
-  const { trackId } = use(params);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { trackId } = await params;
+  const track = await getTrack(trackId ?? BEST_SONG_EVER_TRACK_ID);
+  const title = `Add ${track?.name} to your queue`;
+  const description = `${track?.artists
+    .map((artist) => artist.name)
+    .join(', ')} - ${track?.name}`;
 
-  const router = useRouter();
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: track?.album?.images[0]?.url }],
+      type: 'music.song',
+      url: `/track/${trackId}`,
+    },
+  };
+}
 
-  useEffect(() => {
-    getTrack(trackId ?? BEST_SONG_EVER_TRACK_ID).then((track) => {
-      setTrack(track);
-      setIsLoading(false);
-    });
+// page is primarily used for rendering
+export default async function TrackPage({ params }: Props) {
+  const { trackId } = await params;
 
-    async function startAuth() {
-      const { authUrl, state } = await generateSpotifyAuthUrl(trackId);
-      localStorage.setItem('spotify_state', state);
-
-      router.push(authUrl);
-    }
-
-    let accessToken = localStorage.getItem('spotify_access_token');
-
-    if (accessToken) {
-      const expiresAt = localStorage.getItem('spotify_expires_at');
-
-      if (expiresAt && new Date(expiresAt) < new Date()) {
-        refreshSpotifyToken(
-          localStorage.getItem('spotify_refresh_token')!,
-        ).then(({ accessToken: newAccessToken, refreshToken, expiresAt }) => {
-          console.log('new access token', newAccessToken);
-          accessToken = newAccessToken;
-          localStorage.setItem('spotify_access_token', newAccessToken);
-          localStorage.setItem('spotify_refresh_token', refreshToken);
-          localStorage.setItem('spotify_expires_at', expiresAt.toISOString());
-        });
-      }
-
-      addToQueue(accessToken, trackId ?? BEST_SONG_EVER_TRACK_ID)
-        .then(() => {
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          setError(error.message);
-        });
-    } else {
-      startAuth();
-    }
-  }, [trackId, router]);
+  const track = await getTrack(trackId ?? BEST_SONG_EVER_TRACK_ID);
 
   return (
-    <div>
-      {error && <div>Error: {error}</div>}
-      {isLoading && <div>Loading...</div>}
-      {!error && !isLoading && <div>Success</div>}
-      {track && (
-        <div>
-          {track.album.images.map((image, index) => (
+    <div
+      data-theme='dark'
+      className='flex flex-col items-center justify-center h-screen'
+    >
+      <Head>
+        <title>
+          {track?.artists.map((artist) => artist.name).join(', ')} -{' '}
+          {track?.name}
+        </title>
+      </Head>
+      <main>
+        <div className='card-xl bg-neutral shadow-sm'>
+          <figure className='p-4 pb-0'>
             <Image
-              key={index}
-              src={image.url}
+              src={track.album.images[0].url}
               alt={track.name}
-              width={image.width}
-              height={image.height}
+              width={500}
+              height={500}
             />
-          ))}
+          </figure>
+          <div className='card-body'>
+            <div className='card-title'>{track.name}</div>
+            <div>{track.artists.map((artist) => artist.name).join(', ')}</div>
+          </div>
         </div>
-      )}
+        {/* <AddToQueue trackId={trackId ?? BEST_SONG_EVER_TRACK_ID} /> */}
+      </main>
     </div>
   );
 }
