@@ -5,9 +5,12 @@ import {
   generateSpotifyAuthUrl,
   refreshSpotifyToken,
   BEST_SONG_EVER_TRACK_ID,
+  getTrack,
+  Track,
 } from '@/app/spotify';
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function TrackPage({
   params,
@@ -16,12 +19,18 @@ export default function TrackPage({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [track, setTrack] = useState<Track | null>(null);
 
   const { trackId } = use(params);
 
   const router = useRouter();
 
   useEffect(() => {
+    getTrack(trackId ?? BEST_SONG_EVER_TRACK_ID).then((track) => {
+      setTrack(track);
+      setIsLoading(false);
+    });
+
     async function startAuth() {
       const { authUrl, state } = await generateSpotifyAuthUrl(trackId);
       localStorage.setItem('spotify_state', state);
@@ -63,6 +72,19 @@ export default function TrackPage({
       {error && <div>Error: {error}</div>}
       {isLoading && <div>Loading...</div>}
       {!error && !isLoading && <div>Success</div>}
+      {track && (
+        <div>
+          {track.album.images.map((image, index) => (
+            <Image
+              key={index}
+              src={image.url}
+              alt={track.name}
+              width={image.width}
+              height={image.height}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

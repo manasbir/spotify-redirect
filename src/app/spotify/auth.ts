@@ -111,3 +111,28 @@ export async function refreshSpotifyToken(
     expiresAt: new Date(Date.now() + data.expires_in * 1000),
   };
 }
+
+export async function getServerAuthToken(): Promise<string> {
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+  });
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${Buffer.from(
+        `${spotifyClientId}:${spotifyClientSecret}`,
+      ).toString('base64')}`,
+    },
+    body,
+  });
+
+  const data = (await response.json()) as SpotifyTokenResponse | SpotifyError;
+
+  if ('error' in data) {
+    throw new Error(data.error_description);
+  }
+
+  return data.access_token;
+}
