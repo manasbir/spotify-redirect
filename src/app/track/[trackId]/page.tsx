@@ -58,11 +58,17 @@ export default async function TrackPage({ params }: Props) {
             />
           </figure>
           <div className='card-body'>
-            <div className='card-title'>{track.name}</div>
-            <div>{track.artists.map((artist) => artist.name).join(', ')}</div>
+            <div className='flex flex-row justify-between'>
+              <div>
+                <div className='card-title'>{track.name}</div>
+                <div>
+                  {track.artists.map((artist) => artist.name).join(', ')}
+                </div>
+              </div>
+              <AddToQueue trackId={trackId ?? BEST_SONG_EVER_TRACK_ID} />
+            </div>
           </div>
         </div>
-        {/* <AddToQueue trackId={trackId ?? BEST_SONG_EVER_TRACK_ID} /> */}
       </main>
     </div>
   );
