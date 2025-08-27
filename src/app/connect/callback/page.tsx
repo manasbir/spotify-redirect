@@ -2,19 +2,19 @@
 
 import { redirect, useSearchParams } from 'next/navigation';
 import { getSpotifyToken } from '../../spotify/auth';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { BEST_SONG_EVER_TRACK_ID } from '@/app/spotify';
 
-export default function Callback() {
+function Callback() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const code = searchParams.get('code');
-  const state = searchParams.get('state');
-  const errorParam = searchParams.get('error');
-
   useEffect(() => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const errorParam = searchParams.get('error');
+
     async function getToken() {
       if (errorParam) {
         setError(errorParam);
@@ -47,7 +47,7 @@ export default function Callback() {
     }
 
     getToken();
-  }, [code, state, errorParam]);
+  }, [searchParams]);
 
   return (
     <>
@@ -55,5 +55,13 @@ export default function Callback() {
       {error && <div>Error: {error}, send manas a manas</div>}
       {!isLoading && !error && <div>Success</div>}
     </>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Callback />
+    </Suspense>
   );
 }

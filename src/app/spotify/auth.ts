@@ -18,7 +18,7 @@ type SpotifyError = {
 const redirect_uri =
   process.env.NODE_ENV === 'development'
     ? 'https://upright-dog-lovely.ngrok-free.app/connect/callback'
-    : 'http://localhost:3000/connect/callback';
+    : process.env.NEXT_PUBLIC_APP_URL + '/connect/callback';
 
 export async function generateSpotifyAuthUrl(trackId?: string): Promise<{
   authUrl: string;
