@@ -1,9 +1,9 @@
 'use client';
 
 import { redirect, useSearchParams } from 'next/navigation';
-import { getSpotifyToken } from '../../utils/spotify';
+import { getSpotifyToken } from '../../spotify/auth';
 import { useEffect, useState } from 'react';
-import { BEST_SONG_EVER_TRACK_ID } from '@/app/constants';
+import { BEST_SONG_EVER_TRACK_ID } from '@/app/spotify';
 
 export default function Callback() {
   const searchParams = useSearchParams();

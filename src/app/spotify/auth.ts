@@ -1,5 +1,7 @@
 'use server';
 
+import { spotifyClientId, spotifyClientSecret } from './constants';
+
 type SpotifyTokenResponse = {
   access_token: string;
   token_type: string;
@@ -18,9 +20,6 @@ const redirect_uri =
     ? 'https://upright-dog-lovely.ngrok-free.app/connect/callback'
     : 'http://localhost:3000/connect/callback';
 
-const client_id = process.env.SPOTIFY_CLIENT_ID!;
-const client_secret = process.env.SPOTIFY_CLIENT_SECRET!;
-
 export async function generateSpotifyAuthUrl(trackId?: string): Promise<{
   authUrl: string;
   state: string;
@@ -31,7 +30,7 @@ export async function generateSpotifyAuthUrl(trackId?: string): Promise<{
 
   const queryString = new URLSearchParams({
     response_type,
-    client_id,
+    client_id: spotifyClientId,
     state,
     scope,
     redirect_uri,
@@ -57,7 +56,7 @@ export async function getSpotifyToken(
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${Buffer.from(
-        `${client_id}:${client_secret}`,
+        `${spotifyClientId}:${spotifyClientSecret}`,
       ).toString('base64')}`,
     },
     body,
@@ -86,7 +85,7 @@ export async function refreshSpotifyToken(
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
-    client_id,
+    client_id: spotifyClientId,
   });
 
   const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -94,7 +93,7 @@ export async function refreshSpotifyToken(
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${Buffer.from(
-        `${client_id}:${client_secret}`,
+        `${spotifyClientId}:${spotifyClientSecret}`,
       ).toString('base64')}`,
     },
     body,
@@ -111,32 +110,4 @@ export async function refreshSpotifyToken(
     refreshToken: data.refresh_token,
     expiresAt: new Date(Date.now() + data.expires_in * 1000),
   };
-}
-
-/**
- * Add a track to the queue
- * @param accessToken - The access token for the user, assumed to be valid and not expired
- * @param trackId - The ID of the track to add to the queue
- */
-export async function addToQueue(
-  accessToken: string,
-  trackId: string,
-): Promise<void> {
-  const response = await fetch(
-    `https://api.spotify.com/v1/me/player/queue?uri=spotify:track:${trackId}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to add to queue: ${
-        response.statusText
-      }. Response: ${await response.text()}`,
-    );
-  }
 }
